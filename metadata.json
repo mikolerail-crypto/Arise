@@ -1,0 +1,6 @@
+{
+  "name": "ASTRYX: NEXUS ZERO",
+  "description": "A high-octane 3D anime action RPG prototype featuring Zane the Celestial Wanderer, real-time sword combat, combos, abilities, and an explorable fantasy realm.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
