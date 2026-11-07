@@ -4,6 +4,7 @@ import { WorldManager } from './world/Terrain';
 import { PlayerController } from './entities/PlayerController';
 import { EnemyManager } from './entities/EnemyManager';
 import { VFXManager } from './vfx/VFXManager';
+import { PostProcessing } from './vfx/PostProcessing';
 import { soundSystem } from '../audio/SoundSystem';
 import { FloatingDamage, QuestItem } from './types';
 import { INITIAL_QUESTS } from './constants';
@@ -46,6 +47,7 @@ export class GameEngine {
   public scene!: THREE.Scene;
   public camera!: THREE.PerspectiveCamera;
   public isSoftwareGl: boolean = false;
+  public post: PostProcessing | null = null;
 
   public env!: EnvironmentManager;
   public world!: WorldManager;
@@ -124,6 +126,14 @@ export class GameEngine {
     this.renderer.domElement.style.width = '100%';
     this.renderer.domElement.style.height = '100%';
     this.renderer.domElement.style.display = 'block';
+
+    if (!this.isSoftwareGl) {
+      try {
+        this.post = new PostProcessing(this.renderer, this.scene, this.camera, width, height);
+      } catch {
+        this.post = null;
+      }
+    }
   }
 
   private initGameSystems() {
@@ -210,6 +220,7 @@ export class GameEngine {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
+    this.post?.setSize(width, height);
   }
 
   private handleKeyDown(e: KeyboardEvent) {
@@ -308,7 +319,12 @@ export class GameEngine {
         this.updateGame(delta, now / 1000);
       }
 
-      this.renderer.render(this.scene, this.camera);
+      if (this.post) {
+        this.post.trackPlayerHp(this.player.stats.hp, this.player.stats.maxHp);
+        this.post.render(delta, now / 1000);
+      } else {
+        this.renderer.render(this.scene, this.camera);
+      }
 
       if (this.isSoftwareGl) {
         afterDraw(() => tick(performance.now()));
@@ -429,6 +445,7 @@ export class GameEngine {
     if (this.renderer?.domElement && this.renderer.domElement.parentNode) {
       this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
     }
+    this.post?.dispose();
     this.renderer?.dispose();
   }
 }
